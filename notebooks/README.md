@@ -21,10 +21,9 @@ aleatorias con semilla fija, en vez de una demo sobre un único escaneo.
 | **02** | Visor 3D interactivo de escritorio (VTK): malla, campo, nube de puntos, sobre cualquier caso | selector de los 600 | No |
 | **03** | Generar **vistas sintéticas + poses de cámara exactas** (input del 3DGS), sin COLMAP | **2 880 vistas** · 20 casos | No |
 | **04** | **3DGS moderno entrenado** (`gsplat`/GPU) evaluado en **vistas retenidas** → contrato | 8 casos entrenados | **Sí** |
-| _(exercise)_ | Segmentación FDI por punto (Point Transformer/PyG) — **no vive en este repo**, ver [monorepo](https://github.com/ANFAIA/Agentic-Smart-Health/blob/develop/notebooks/exercise-point-transformer-teeth3ds.ipynb) | 600 mallas | **Sí** |
 
 **No se ha probado (aún):** foto→3D con **fotos reales**, **fusión multimodal**
-(CBCT+STL), ni la integración como **agentes / LLM**. El 3DGS moderno se validó por
+(CBCT+STL), ni la integración en un sistema mayor. El 3DGS moderno se validó por
 vía sintética (matiz «circular» documentado en
 [`docs/research/dataset-teeth3ds.md` §5.1](../docs/research/dataset-teeth3ds.md)).
 
@@ -50,7 +49,7 @@ vía sintética (matiz «circular» documentado en
 
 ## `01-vtk-3dgs-poc.ipynb` — Malla dental → Gaussian Splatting (VTK)
 
-**Issue 2 · PoC MVP 1.** Valida el eslabón mínimo del pipeline
+Valida el eslabón mínimo del pipeline
 *«malla 3D → representación gaussiana volumétrica → contrato de datos»* con la
 librería de entrada (VTK) y el dataset real (Teeth3DS+).
 
@@ -70,16 +69,16 @@ barrido de la cadena sobre 24 casos aleatorios → galería de 6 pacientes`
 - **Y aguanta el dataset entero**: el barrido (§6) repite carga + labels +
   *splatting* sobre **24 escaneos aleatorios** (semilla fija) sin una sola
   excepción, midiendo el coste — ~0,05 s de carga + ~0,15 s de splat por escaneo,
-  que es el presupuesto del futuro `mesh-agent`.
+  que es el presupuesto de una ingesta por lotes.
 - **Las etiquetas FDI casan con la geometría** (render coloreado por diente): el
   ancla semántica `region_id` está bien alineada → ground truth listo para el
-  futuro `segmentation-agent` y para la fusión semántica. La galería (§7) lo
+  entrenamiento de segmentación y para la fusión semántica. La galería (§7) lo
   enseña sobre **seis anatomías distintas**, no solo sobre el caso de la foto.
 - **El desbalance del dataset está cuantificado** (§1b, los 600 escaneos en ~6 s):
   la encía es el **43%** de los vértices; la mediana real es de **14 dientes por
   arcada**, no 16; el FDI `18` **no aparece en ningún escaneo**, los cordales
   `28`/`38`/`48` en el **1%**, y los segundos molares (`17`/`27`/`37`/`47`) faltan
-  en un tercio. Justifica la *loss* ponderada del `segmentation-agent` y **acota lo
+  en un tercio. Justifica una *loss* ponderada al entrenar segmentación y **acota lo
   que puede prometer**: no segmentará cordales, porque casi no los ha visto.
 - **VTK es viable** como librería de entrada y renderiza *headless* (offscreen →
   PNG), sirve en servidor/CI sin pantalla.
@@ -99,15 +98,15 @@ barrido de la cadena sobre 24 casos aleatorios → galería de 6 pacientes`
   a renderizar vistas sintéticas con verdad-terreno para ese pipeline).
 - **No hay fusión multimodal** (CBCT+STL) — es trabajo posterior.
 
-### Qué decide (insumo para los ADR)
+### Qué decide
 
 | Hallazgo | Alimenta |
 |---|---|
-| Qué da VTK y qué le falta (isótropas, coste O(n³), sensibilidad a `Radius`) | **D1 · ADR 002** (motor de render) |
+| Qué da VTK y qué le falta (isótropas, coste O(n³), sensibilidad a `Radius`) | elección del motor de render |
 | Los `.obj` traen color por vértice sin usar | canal `color_superficie` de la **fusión** |
 | Encía aislable (`label`/`instance` 0) | futuro PoC de inflamación/pH |
-| Desbalance FDI medido (encía 43%, cordales ~ausentes, mediana 14 dientes) | *loss* ponderada y **alcance declarado** del `segmentation-agent` |
-| Coste por escaneo medido y extrapolado a los 600 | dimensionado de la ingesta por lotes (`mesh-agent`) |
+| Desbalance FDI medido (encía 43%, cordales ~ausentes, mediana 14 dientes) | *loss* ponderada y **alcance declarado** de un segmentador |
+| Coste por escaneo medido y extrapolado a los 600 | dimensionado de la ingesta por lotes |
 
 ### Cómo correrlo
 
@@ -124,8 +123,8 @@ Teeth3DS+ en `data/raw/teeth3ds/` (gitignored) — ver
 `.ply` en `data/processed/teeth3ds/` (gitignored). Renders, figuras del dataset y
 galería quedan **embebidos** en el `.ipynb` (visibles en GitHub sin ejecutar).
 
-**Siguiente:** Issue 3 (visor web three.js / GaussianSplats3D) y, tras el spike de
-motores, redactar el **ADR 002** de render.
+**Siguiente:** los notebooks 03 y 04 — vistas sintéticas con pose exacta y 3DGS
+entrenado sobre ellas.
 
 ---
 
@@ -218,7 +217,7 @@ vistas por caso). El PSNR sobre ellas distingue *reconstruir geometría* de
 | Coste | ~5 ms/iteración · <400 MiB de VRAM · ~6 s por caso |
 
 Que la desviación entre anatomías sea de **0,19 dB** es el resultado que vale para
-el ADR: el motor se comporta igual en arcadas distintas, no solo en el caso bonito.
+de verdad: el motor se comporta igual en arcadas distintas, no solo en el caso bonito.
 
 > ⚠️ **Requiere GPU, en su propio entorno.** `torch`/`gsplat` son específicos de la
 > máquina (cu128/Blackwell) y **no** van en `pyproject.toml` (romperían la lock
@@ -245,26 +244,4 @@ gaussianas entrenado — requiere pantalla; lánzalo con
 
 **Mejoras naturales:** densificación/poda (`gsplat` `DefaultStrategy`), color por
 armónicos esféricos (sin ellos el especular del render no se puede reproducir),
-SSIM, y export `.splat` para el visor web (**Issue 17**).
-
----
-
-## Segmentación de dientes (FDI) por punto — *fuera de este repo*
-
-> El notebook `exercise-point-transformer-teeth3ds.ipynb` y su análisis viven en el
-> monorepo [`ANFAIA/Agentic-Smart-Health`](https://github.com/ANFAIA/Agentic-Smart-Health/tree/develop/notebooks),
-> no aquí. Se resume porque comparte dataset con los 01–04.
-
-Prototipo del **`segmentation-agent`**: nube de puntos del escaneo intraoral →
-etiqueta **FDI por punto**. Point Transformer (PyG) sobre **Teeth3DS+ completo**
-(300 pacientes / 600 mallas), con **loss ponderada por clase** y diagnóstico `tooth_acc`.
-
-**Hallazgo (ablación de features, `tooth_acc` test):** `pos-only` no generaliza (**0.08**); basta
-**un descriptor local por punto** para arreglarlo — **normales 0.84**, gris CBCT sintético 0.79,
-y combinarlos **no suma** (redundantes). La palanca no es «más datos» ni «el CBCT», sino la
-geometría **local**. El gris real aporta por **fusión** (registro CBCT↔malla, estilo DDMF), no
-pintando gris por vértice.
-
-Detalle completo, ablación, referencia DDMF y reproducción:
-[`exercise-point-transformer-teeth3ds.md`](https://github.com/ANFAIA/Agentic-Smart-Health/blob/develop/notebooks/exercise-point-transformer-teeth3ds.md).
-Requiere el kernel GPU **"Dental GPU (3DGS)"** (ver §04).
+SSIM, y export `.splat` para un visor web.

@@ -5,12 +5,12 @@
 > **Dataset completo descargado y verificado** en `data/raw/teeth3ds/` (gitignored):
 > **300 pacientes / 600 escaneos** (maxilar+mandíbula), **~70 M vértices
 > etiquetados**, 7,3 GiB — todo lo que publican los zips oficiales (base + `_b2`).
-> Cada `.obj` tiene su `.json` de labels: **0 huérfanos**. **Issue 1 cerrada.**
+> Cada `.obj` tiene su `.json` de labels: **0 huérfanos**.
 >
 > *(Hasta el 2026-07-21 se trabajaba sobre un subconjunto de 12 pacientes / 24
 > escaneos; el script sigue pudiendo bajar solo ese con `--subset`.)*
 
-Contraparte de código: **PoC MVP 1 hecho** —
+Contraparte de código: **notebook 01 ejecutado** —
 [`notebooks/01-vtk-3dgs-poc.ipynb`](../../notebooks/01-vtk-3dgs-poc.ipynb)
 (resultados y alcance en [`notebooks/README.md`](../../notebooks/README.md)):
 carga la malla, valida el ancla FDI, corre `vtkGaussianSplatter` y serializa al
@@ -73,7 +73,7 @@ las figuras embebidas.
 | resto | 91–100% | presentes casi siempre |
 
 > **Consecuencia de diseño.** Esto no es color local: (a) obliga a **loss ponderada
-> por clase** en el `segmentation-agent` y descarta la *accuracy* global como
+> por clase** al entrenar segmentación y descarta la *accuracy* global como
 > métrica —la encía sola ya da el 43%—; y (b) **acota lo que el sistema puede
 > prometer**: un modelo entrenado aquí **no segmenta cordales**, porque casi nunca
 > los ha visto. Declararlo es parte del alcance, no una nota al pie.
@@ -111,8 +111,8 @@ publicado**: la descarga real es por Google Drive (§6).
 ## 5. Por qué encaja con nuestra arquitectura (si la licencia lo permite)
 
 - **Mallas → VTK nativo**: se cargan directas y se muestrean a nube de puntos para
-  `vtkGaussianSplatter` (PoC MVP 1).
-- **Labels por diente → `region_id` FDI**: alimentan el `segmentation-agent` y el
+  `vtkGaussianSplatter` (notebook 01).
+- **Labels por diente → `region_id` FDI**: alimentan el entrenamiento de segmentación y el
   ancla semántica de la fusión (ver).
 - **Truco «solo fotos»**: al tener malla 3D con ground truth, se pueden **renderizar
   fotos multi-vista sintéticas** desde cada malla → alimentar el pipeline
@@ -125,13 +125,13 @@ El dataset es de **mallas**, no de fotos. Eso determina qué PoC son posibles:
 
 | Objetivo | ¿Posible con este dataset? | Por qué |
 |---|---|---|
-| **Gaussian splatting clásico** (`vtkGaussianSplatter`) | ✅ Hecho (PoC MVP 1) | Partimos de la geometría (puntos de la malla) |
+| **Gaussian splatting clásico** (`vtkGaussianSplatter`) | ✅ Hecho (notebook 01) | Partimos de la geometría (puntos de la malla) |
 | **3DGS moderno** (fotos-con-pose → gaussianas entrenadas) | ✅ Sí, **vía vistas sintéticas** | Renderizamos la malla desde N ángulos → **fotos + poses conocidas** + nube inicial; se salta COLMAP. Sirve de validación con verdad-terreno |
 | **Foto→3D REAL** (fotos en crudo de cámara → COLMAP → 3DGS) | ❌ No | No hay **fotos reales** dentales multi-vista; el dataset no las contiene y no existe uno público |
 
 > **Matiz honesto:** el 3DGS moderno vía vistas sintéticas es **circular** (renderizamos
 > desde la malla y reconstruimos la misma malla) — vale como **validación del motor
-> 3DGS** y para producir un `.splat` para el visor web (Issue 17), **no** como
+> 3DGS** y para producir un `.splat` para un visor web, **no** como
 > solución del caso clínico «solo con fotos del móvil», que requeriría una captura
 > real fuera de este dataset.
 
@@ -141,7 +141,7 @@ genera **2.880 vistas** (20 casos × 144) con error de reproyección de pose
 **0,0000 px en todas**, y [`04`](../../notebooks/04-train-3dgs-gsplat.ipynb) entrena
 8 casos evaluando en **vistas retenidas** (1 de cada 8, nunca vistas): **21,04 ±
 0,19 dB** de PSNR, con una brecha train−retenidas de 0,65 dB. Que la desviación
-entre anatomías sea de 0,19 dB es lo que convierte esto en insumo del **ADR 002**.
+entre anatomías sea de 0,19 dB es lo que hace comparable el motor entre anatomías.
 Generar 2.880 imágenes sintéticas en vez de 24 **no cambia** el matiz circular de
 arriba: mejora la evidencia sobre el motor, no sobre el pipeline foto→3D clínico.
 
