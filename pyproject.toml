@@ -1,0 +1,33 @@
+[project]
+name = "dental-3dgs-lab"
+version = "0.1.0"
+description = "Experimentos de 3D Gaussian Splatting sobre escaneos intraorales (Teeth3DS+)"
+requires-python = ">=3.13"
+
+# Entorno de los notebooks 01-03 (sin GPU). Las versiones son las que se
+# usaron para ejecutarlos; los outputs embebidos salen de aqui.
+dependencies = [
+    "core-schemas",
+    "vtk>=9.6.2",
+    "numpy>=2.5.1",
+    "matplotlib>=3.11.0",
+    "jupyter>=1.1.1",
+    "ipykernel>=7.3.0",
+]
+
+# torch y gsplat NO van aqui a proposito: son especificos de la maquina
+# (CUDA/arquitectura de la GPU) y un `uv sync` los podaria. El notebook 04
+# usa su propio entorno — ver README.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+core-schemas = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["packages"]

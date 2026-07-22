@@ -14,7 +14,7 @@ Contraparte de código: **PoC MVP 1 hecho** —
 [`notebooks/01-vtk-3dgs-poc.ipynb`](../../notebooks/01-vtk-3dgs-poc.ipynb)
 (resultados y alcance en [`notebooks/README.md`](../../notebooks/README.md)):
 carga la malla, valida el ancla FDI, corre `vtkGaussianSplatter` y serializa al
-contrato. Diseño: [`docs/architecture/multi-agent-pipeline.md`](../architecture/multi-agent-pipeline.md).
+contrato. Diseño:.
 
 ---
 
@@ -113,7 +113,7 @@ publicado**: la descarga real es por Google Drive (§6).
 - **Mallas → VTK nativo**: se cargan directas y se muestrean a nube de puntos para
   `vtkGaussianSplatter` (PoC MVP 1).
 - **Labels por diente → `region_id` FDI**: alimentan el `segmentation-agent` y el
-  ancla semántica de la fusión (ver [pipeline §3-4](../architecture/multi-agent-pipeline.md)).
+  ancla semántica de la fusión (ver).
 - **Truco «solo fotos»**: al tener malla 3D con ground truth, se pueden **renderizar
   fotos multi-vista sintéticas** desde cada malla → alimentar el pipeline
   foto→3DGS **con verdad-terreno para comparar**, resolviendo la inexistencia de un
