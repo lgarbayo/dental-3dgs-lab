@@ -1,7 +1,7 @@
 """
-Modelos base del Digital Twin dental — Agentic Smart Health.
+Modelos base del contrato de datos dental.
 
-Traducción a Pydantic v2 del diseño conceptual de la Semana 1:
+Traducción a Pydantic v2 del diseño conceptual:
 
   1. Cómo RGS (CBCT + 3DGS) guarda la densidad radiológica en la primitiva
      gaussiana  →  `GaussianPrimitive` (θₙ = {c, Σ, σ}).
@@ -14,14 +14,12 @@ Traducción a Pydantic v2 del diseño conceptual de la Semana 1:
        reversibilidad) + observaciones regionales timestamped (evolución de
        atributos como el pH a lo largo del tiempo).
 
-Nota de arquitectura: los arrays masivos de gaussianas (potencialmente
-millones) viven como tensores/nubes de puntos en `3dgs-engine`. Aquí se
-define el *contrato* de datos y los metadatos clínicos; `GaussianPrimitive`
-documenta la unidad canónica y sirve para (de)serialización de conjuntos
-pequeños, no para almacenar el campo completo en memoria como objetos Pydantic.
-
-Las decisiones de diseño que justifican esta estructura están registradas en
-`docs/architecture/001-digital-twin-core-schemas.md` (ADR 001).
+Nota de diseño: los arrays masivos de gaussianas (potencialmente millones)
+viven como tensores/nubes de puntos en disco (`.ply`), referenciados por hash.
+Aquí se define el *contrato* de datos y los metadatos clínicos;
+`GaussianPrimitive` documenta la unidad canónica y sirve para (de)serialización
+de conjuntos pequeños, no para almacenar el campo completo en memoria como
+objetos Pydantic.
 
 Ref.: Lin et al., "Residual Gaussian Splatting for Ultra Sparse-View CBCT
 Reconstruction", arXiv:2604.27552v1 (2026).
@@ -57,8 +55,8 @@ class ModalityStatus(str, Enum):
     """Resultado de la ingesta de una modalidad en un snapshot.
 
     Hace explícito el fallo/ausencia: un snapshot parcial deja de ser
-    indistinguible de uno completo. Sin esto, «falta la malla» y «el agente de
-    malla falló» serían el mismo silencio (ver ADR 001, manejo de fallos de ingesta).
+    indistinguible de uno completo. Sin esto, «falta la malla» y «la ingesta de
+    la malla falló» serían el mismo silencio.
     """
 
     OK = "ok"            # ingerida y traducida al contrato
@@ -71,7 +69,7 @@ class Support(str, Enum):
 
     Es la distinción clave del diseño: los tres atributos NO comparten soporte.
     Vocabulario controlado; el soporte se codifica *estructuralmente* según en
-    qué modelo vive cada atributo (ver ADR 001, §4.1).
+    qué modelo vive cada atributo.
     """
 
     VOLUMETRIC = "volumetric"  # todo el volumen, por gaussiana (σ)
@@ -216,7 +214,7 @@ class TwinSnapshot(BaseModel):
 
     Snapshot-céntrico por reversibilidad: cada snapshot es autocontenido y basta
     para regenerar la malla/imágenes de esa fecha. El campo gaussiano masivo no se
-    embebe: se referencia por hash/URI al almacén de `3dgs-engine`.
+    embebe: se referencia por hash/URI al artefacto `.ply` en disco.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -237,7 +235,8 @@ class TwinSnapshot(BaseModel):
         description="Log autoritativo del resultado de ingesta por modalidad (fail-loud).",
     )
     gaussian_field_ref: str = Field(
-        description="Hash/URI del campo gaussiano en 3dgs-engine. Invariante fail-loud: "
+        description="Hash/URI del campo gaussiano (p. ej. `ply://…#sha256:…`). Invariante "
+        "fail-loud: "
         "al cargar/exportar hay que validar que el blob referenciado existe; una "
         "referencia colgante es un error, no un modelo vacío silencioso.",
     )

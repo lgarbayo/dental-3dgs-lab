@@ -1,7 +1,8 @@
-"""Esquemas Pydantic compartidos del Digital Twin dental (contrato de datos).
+"""Esquemas Pydantic del contrato de datos dental.
 
-Punto único de importación para el resto del monorepo. Los agentes se comunican
-exclusivamente a través de estos modelos (ver AGENTS.md y ADR 001).
+Punto único de importación. Los notebooks 01 y 04 serializan su salida a estos
+modelos: el campo de gaussianas se referencia por hash desde un `TwinSnapshot`,
+en vez de embeberse.
 """
 
 from core_schemas.models import (

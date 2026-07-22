@@ -26,7 +26,7 @@ from pydantic import ValidationError
 
 
 def _prov(**kw) -> Provenance:
-    base = dict(source_file="scan.obj", modality=Modality.MESH, agent="mesh-agent")
+    base = dict(source_file="scan.obj", modality=Modality.MESH, agent="mesh-loader")
     base.update(kw)
     return Provenance(**base)
 
