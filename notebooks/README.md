@@ -212,12 +212,19 @@ vistas por caso). El PSNR sobre ellas distingue *reconstruir geometría* de
 
 | Métrica (8 casos entrenados, 6 000 iters c/u) | Valor |
 |---|---|
-| PSNR en **vistas retenidas** | **22,05 ± 0,09 dB** (rango 21,95–22,25) |
-| Brecha PSNR train − retenidas | **0,73 dB** → sin sobreajuste apreciable |
-| Coste | ~2 ms/iteración · ~970 MiB de VRAM · ~11 s por caso |
+| PSNR en **vistas retenidas** | **31,88 ± 0,24 dB** (rango 31,38–32,10) |
+| Brecha PSNR train − retenidas | **1,78 dB** → ver nota abajo |
+| Gaussianas | ~37 k iniciales → **~110–150 k** tras densificar |
+| Coste | ~5 ms/iteración · ~1 GiB de VRAM · ~26 s por caso |
 
-Que la desviación entre anatomías sea de **0,09 dB** es el resultado que vale para
-de verdad: el motor se comporta igual en arcadas distintas, no solo en el caso bonito.
+Que la desviación entre anatomías sea de **0,24 dB** es el resultado que vale de
+verdad: el motor se comporta igual en arcadas distintas, no solo en el caso bonito.
+
+> **Sobre la brecha de 1,78 dB.** Con la receta anterior era 0,73 dB y el aviso
+> automático no saltaba. No es degradación: el PSNR en retenidas subió ~10 dB a la
+> vez. Lo que ha crecido es la **capacidad** —4× más gaussianas ajustan mejor lo que
+> ven—, así que el umbral de 1,5 dB, calibrado para la receta sin densificar, se
+> queda corto. Se deja el aviso a la vista en vez de subir el umbral hasta que calle.
 
 > ⚠️ **Requiere GPU, en su propio entorno.** `torch`/`gsplat` son específicos de la
 > máquina (cu128/Blackwell) y **no** van en `pyproject.toml` (romperían la lock
@@ -237,11 +244,15 @@ de verdad: el motor se comporta igual en arcadas distintas, no solo en el caso b
 ~/.venvs/dental-gpu/bin/jupyter nbconvert --to notebook --execute --inplace notebooks/04-train-3dgs-gsplat.ipynb
 ```
 
-Tarda ~3 min (caso de referencia con 9 000 iters + barrido de 8 casos). Incluye un
+Tarda ~5 min (caso de referencia con 9 000 iters + barrido de 8 casos). Incluye un
 **visor interactivo** (§8, ventana nativa VTK como el `02`) para rotar el campo de
 gaussianas entrenado — requiere pantalla; lánzalo con
 `~/.venvs/dental-gpu/bin/jupyter notebook` (kernel **"Dental GPU (3DGS)"**).
 
-**Mejoras naturales:** densificación/poda (`gsplat` `DefaultStrategy`), color por
-armónicos esféricos (sin ellos el especular del render no se puede reproducir),
-SSIM, y export `.splat` para un visor web.
+**Receta:** pérdida `0,8·L1 + 0,2·(1−SSIM)`, densificación y poda con
+`DefaultStrategy` de `gsplat`, y armónicos esféricos de grado 2. Frente a «L1 sola,
+sin densificar, sin armónicos» eso sube el PSNR en retenidas de **22,6 a 32,5 dB**
+en el caso de referencia. El precio es el tamaño: el `.ply` pasa de 2,4 a ~23 MB.
+
+**Mejoras naturales que quedan:** más resolución que 400×400, y export `.splat`
+(más compacto que el PLY para servir por web).

@@ -139,9 +139,9 @@ El dataset es de **mallas**, no de fotos. Eso determina qué PoC son posibles:
 dejó de ser una anécdota: [`03`](../../notebooks/03-synthetic-views-for-3dgs.ipynb)
 genera **10.560 vistas** (20 casos × 528) con error de reproyección de pose
 **0,0000 px en todas**, y [`04`](../../notebooks/04-train-3dgs-gsplat.ipynb) entrena
-8 casos evaluando en **vistas retenidas** (1 de cada 8, nunca vistas): **22,05 ±
-0,09 dB** de PSNR, con una brecha train−retenidas de 0,73 dB. Que la desviación
-entre anatomías sea de 0,09 dB es lo que hace comparable el motor entre anatomías.
+8 casos evaluando en **vistas retenidas** (1 de cada 8, nunca vistas): **31,88 ±
+0,24 dB** de PSNR, con una brecha train−retenidas de 1,78 dB. Que la desviación
+entre anatomías sea de 0,24 dB es lo que hace comparable el motor entre anatomías.
 Generar 10.560 imágenes sintéticas en vez de 24 **no cambia** el matiz circular de
 arriba: mejora la evidencia sobre el motor, no sobre el pipeline foto→3D clínico.
 
